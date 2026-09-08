@@ -1,13 +1,40 @@
 import json
+from pydantic import BaseModel, ValidationError
+from models import FunctionsPrompt, FunctionsDefinitions
 
 
 class Parser():
     def __init__(self) -> None:
-        with open("data/input/function_calling_tests.json", "r", encoding="utf-8") as f:
-            data_txt = json.load(f)
-        print(data_txt)
-        # data = json.loads(data_txt)
-        # print(data)
-        with open("data/input/functions_definition.json", "r", encoding="utf-8") as f:
-            data_txt = json.load(f)
-        print(f"\n{data_txt}")
+        '''To initialize and parse informations'''
+        self.prompts: list[FunctionsPrompt] = self.load_validated(
+            "data/input/function_calling_tests.json", FunctionsPrompt
+            )
+        self.functions : list[FunctionsDefinitions] = self.load_validated(
+            "data/input/functions_definition.json", FunctionsDefinitions
+            )
+
+    @staticmethod
+    def load_validated(path: str, model: type[BaseModel]) -> list:
+        '''Check json in entry and return parsed datas'''
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError as e:
+            raise (e)
+        except OSError as e:
+            raise Exception(f"[ERROR]: {path} doesn't exist")
+        validated = []
+        for i, item in enumerate(data):
+            try:
+                validated.append(model.model_validate(item))
+            except ValidationError as e:
+                raise Exception(f"[ERROR]: function {i + 1} \n{e}")
+        return validated
+
+    # def get_functions(self) -> list:
+    #     '''Return list with all functions'''
+    #     return self.functions
+
+    # def get_prompts(self) -> list:
+    #     '''Return list with all prompts'''
+    #     return self.prompts
