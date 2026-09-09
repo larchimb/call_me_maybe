@@ -14,7 +14,7 @@ class FunctionsPrompt(BaseModel):
 
 
 class ParamSpec(BaseModel):
-    type:Literal["number", "string"]
+    type:Literal["number", "string", "boolean"]
 
 
 class FunctionsDefinitions(BaseModel):
@@ -22,9 +22,3 @@ class FunctionsDefinitions(BaseModel):
     description: NonEmpty
     parameters: dict[NonEmpty, ParamSpec]
     returns: ParamSpec
-
-
-class Answer(BaseModel):
-    prompt: NonEmpty
-    name: NonEmpty
-    parameters: Any

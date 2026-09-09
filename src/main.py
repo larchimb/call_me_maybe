@@ -5,15 +5,27 @@ from models import FunctionsDefinitions, Answer
 
 
 def find_the_function(
-    prompt: str, functions: list[FunctionsDefinitions]) -> str:
+    prompt: str, functions: list[FunctionsDefinitions]) -> None:
     llm = Small_LLM_Model()
-    test = llm.encode(f"Find the closest function in the list {functions} accordind to her description from the next description \"{prompt}\"."
-                      "Your answer must be one of the function name")
+    prompt_text = (
+     "<|im_start|>system\n"
+     "Return a function name corresponding to the user's prompt\n"
+     f"Functions: {functions}\n"
+     "<|im_end|>\n"
+     "<|im_start|>user\n"
+     f"Description: \"{prompt}\"\n"
+     "<|im_end|>\n"
+     "<|im_start|>assistant\n"
+     "<think>\n\n</think>\n\n"
+    )
+    test = llm.encode(prompt_text)
+    # test = llm.encode(f"Find the function in {functions} whose descrition corresponding to {prompt}."
+    #                   "Your answer must start with \"\"fn\"")
     sentence = test[0].tolist()
     answer = []
     token_last_word = 0
     i = 0
-    while token_last_word != 13:
+    while token_last_word != 151645:
         out = llm.get_logits_from_input_ids(sentence)
         m = max(out)
         sentence.append(out.index(m))
@@ -23,8 +35,8 @@ def find_the_function(
 
 def main() -> None:
     parser = Parser()
-    # for item in parser.prompts:
-    find_the_function(parser.prompts[0].prompt, parser.functions)
+    for item in parser.prompts:
+        find_the_function(item.prompt, parser.functions)
 
 
 if __name__ == "__main__":
