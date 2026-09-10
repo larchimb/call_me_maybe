@@ -22,7 +22,7 @@ class Parser():
         except FileNotFoundError as e:
             raise (e)
         except OSError as e:
-            raise Exception(f"[ERROR]: {path} doesn't exist")
+            raise Exception(f"[ERROR]: {path} is locked")
         validated = []
         for i, item in enumerate(data):
             try:

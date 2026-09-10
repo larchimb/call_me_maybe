@@ -10,7 +10,7 @@ NonEmpty = Annotated[
 class FunctionsPrompt(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: NonEmpty
-    function_used: str = None
+    function_used: str = ""
 
 
 class ParamSpec(BaseModel):
