@@ -50,10 +50,12 @@ def find_parameters(
     '''Finding the parameters corresponding to the function in the prompt'''
     prompt_text = (
          "<|im_start|>system\n"
-         "Extract parameters from a prompt for a function\n"
-         f"You must find {len(function.parameters)} parameter"
-         f"function: \"{function.description}\"\n"
-         "Answer will be parsed as a list of parameters"
+         "Extract parameters valus from a prompt for the given function\n"
+         f"function: {function.description}\n"
+         f"You must return exactly {len(function.parameters)} parameter(s)"
+         "Answer ONLY with a single-line JSON object mapping each parameter "
+         "to its value, with no explanation and no extra text.\n"
+         "Don't apply the function, only takes parameters"
          "<|im_end|>\n"
          "<|im_start|>user\n"
          f"Prompt: \"{prompt}\"\n"
