@@ -48,14 +48,19 @@ def find_parameters(
     function: FunctionsDefinitions,
     llm: Small_LLM_Model) -> str:
     '''Finding the parameters corresponding to the function in the prompt'''
+    example: dict = {}
+    for name, kind in function.parameters.items():
+        example[f"{name}"] = kind.type
+        
     prompt_text = (
          "<|im_start|>system\n"
          "Extract parameters valus from a prompt for the given function\n"
          f"function: {function.description}\n"
          f"You must return exactly {len(function.parameters)} parameter(s)"
-         "Answer ONLY with a single-line JSON object mapping each parameter "
-         "to its value, with no explanation and no extra text.\n"
-         "Don't apply the function, only takes parameters"
+        #  "Answer ONLY with a single-line JSON object mapping each parameter "
+        #  "to its value, with no explanation and no extra text.\n"
+          "Don't apply the function, only takes parameters\n"
+         f"Answer must following this parsing : {example}"
          "<|im_end|>\n"
          "<|im_start|>user\n"
          f"Prompt: \"{prompt}\"\n"
