@@ -1,5 +1,6 @@
 from llm_sdk import Small_LLM_Model
 from models import FunctionsDefinitions
+import numpy as np
 
 
 class Llm:
@@ -21,59 +22,74 @@ class Llm:
          "<think>\n\n</think>\n\n"
         )
         sentence = self.llm.encode(prompt_text)[0].tolist()
-        authorized_tokens = self.find_authorized_tokens(functions)
-        answer = self.llm.decode(self.answer_construction(sentence, authorized_tokens))
+        authorized_tokens = self.find_f_authorized_tokens(functions)
+        answer = self.llm.decode(self.answer_function(sentence, authorized_tokens))
         print(answer)
         for function in functions:
             if function.name == answer:
                 function_choosed = function
         return function_choosed
 
-    def find_parameters(
-     self,
-     prompt: str,
-     function: FunctionsDefinitions,
-     ) -> str:
-        '''Finding the parameters corresponding to the function in the prompt'''
-        example: dict = {}
-        for name, kind in function.parameters.items():
-            example[f"{name}"] = kind.type
-
-        prompt_text = (
-             "<|im_start|>system\n"
-             "Extract parameters valus from a prompt for the given function\n"
-             f"function: {function.description}\n"
-             f"You must return exactly {len(function.parameters)} parameter(s)"
-              "Don't apply the function, only takes parameters\n"
-             f"Answer must following this parsing: {example}"
-             "<|im_end|>\n"
-             "<|im_start|>user\n"
-             f"Prompt: \"{prompt}\"\n"
-             "<|im_end|>\n"
-             "<|im_start|>assistant\n"
-             "<think>\n\n</think>\n\n"
-            )
-        sentence = self.llm.encode(prompt_text)[0].tolist()
-        answer = self.llm.decode(self.answer_construction(sentence, [])).strip().strip('"')
-        # print(answer)
-        return answer
-
-    def answer_construction(self, sentence: list[int], restreigned_code: list[int]) -> list[int]:
+    def answer_function(self, sentence: list[int], restreigned_code: list[int]) -> list[int]:
         '''The loop for the llm to create the answer'''
-        t_answer = []
+        start = len(sentence)
         token_last_word = 0
         while token_last_word != 151645:
             logits = self.llm.get_logits_from_input_ids(sentence)
-            m = max(logits)
-            sentence.append(logits.index(m))
-            t_answer.append(logits.index(m))
-            token_last_word = sentence[-1]
-        return (t_answer)
+            logits = np.array(logits)
+            mask = np.ones(len(logits), dtype=bool)
+            mask[restreigned_code] = False
+            logits[mask] = -np.inf
+            next_token = int(np.argmax(logits))
+            sentence.append(next_token)
+            token_last_word = next_token
+        return (sentence[start:])
 
-    def find_authorized_tokens(self, functions: list[FunctionsDefinitions]) -> list[int]:
+    def find_f_authorized_tokens(self, functions: list[FunctionsDefinitions]) -> list[int]:
         '''Recuperate authorized tokens for function name'''
         authorized: list[int] = []
         for function in functions:
             tokens = self.llm.encode(function.name)[0].tolist()
             authorized.extend(tokens)
+        authorized.append(151645)
         return authorized
+
+    def find_parameters(
+         self,
+         prompt: str,
+         function: FunctionsDefinitions,
+         ) -> str:
+            '''Finding the parameters corresponding to the function in the prompt'''
+            example: dict = {}
+            for name, kind in function.parameters.items():
+                example[f"{name}"] = kind.type
+            prompt_text = (
+                 "<|im_start|>system\n"
+                 "Extract parameters valus from a prompt for the given function\n"
+                 f"function: {function.description}\n"
+                 f"You must return exactly {len(function.parameters)} parameter(s)"
+                  "Don't apply the function, only takes parameters\n"
+                 f"Answer must following this parsing: {example}\n"
+                 "<|im_end|>\n"
+                 "<|im_start|>user\n"
+                 f"Prompt: \"{prompt}\"\n"
+                 "<|im_end|>\n"
+                 "<|im_start|>assistant\n"
+                 "<think>\n\n</think>\n\n"
+                )
+            sentence = self.llm.encode(prompt_text)[0].tolist()
+            answer = self.llm.decode(self.answer_parameters(sentence))
+            print(answer)
+            return "answer"
+
+    def answer_parameters(self, sentence: list[int]) -> list[int]:
+            '''The loop for the llm to create the answer'''
+            start = len(sentence)
+            token_last_word = 0
+            while token_last_word != 151645:
+                logits = self.llm.get_logits_from_input_ids(sentence)
+                logits = np.array(logits)
+                next_token = int(np.argmax(logits))
+                sentence.append(next_token)
+                token_last_word = next_token
+            return (sentence[start:])

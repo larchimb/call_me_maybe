@@ -4,25 +4,25 @@ from llm import Llm
 
 
 def main() -> None:
-	parser = Parser()
-	llm = Llm()
-	returned_json: list[dict] = []
-	i = 0
-	for item in parser.prompts:
-		returned_json.append({})
-		dic = returned_json[i]
-		function = llm.find_the_function(
-			item.prompt, parser.functions
-			)
-		dic["prompt"] = item.prompt
-		dic["name"] = function.name
-		dic["parameters"] = llm.find_parameters(item.prompt, function)
-		i += 1
-	print(returned_json)
+    parser = Parser()
+    llm = Llm()
+    returned_json: list[dict] = []
+    i = 0
+    for item in parser.prompts:
+        returned_json.append({})
+        dic = returned_json[i]
+        function = llm.find_the_function(
+            item.prompt, parser.functions
+            )
+        dic["prompt"] = item.prompt
+        dic["name"] = function.name
+        dic["parameters"] = llm.find_parameters(item.prompt, function)
+        i += 1
+    print(returned_json)
 
 
 if __name__ == "__main__":
-	try:
-		main()
-	except (ValidationError, Exception, KeyboardInterrupt) as e:
-		print(e)
+    try:
+        main()
+    except (ValidationError, Exception, KeyboardInterrupt) as e:
+        print(e)
