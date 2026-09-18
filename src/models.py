@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, StringConstraints
-from typing import Literal, Annotated, Any
+from typing import Literal, Annotated
 
 NonEmpty = Annotated[
 	str,
@@ -14,7 +14,7 @@ class FunctionsPrompt(BaseModel):
 
 
 class ParamSpec(BaseModel):
-	type:Literal["number", "string", "boolean", "null"]
+	type:Literal["number", "integer", "string", "boolean"]
 
 
 class FunctionsDefinitions(BaseModel):
@@ -22,4 +22,3 @@ class FunctionsDefinitions(BaseModel):
 	description: NonEmpty
 	parameters: dict[NonEmpty, ParamSpec]
 	returns: ParamSpec
- 
