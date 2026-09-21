@@ -30,11 +30,3 @@ class Parser():
 			except ValidationError as e:
 				raise Exception(f"[ERROR]: function {i + 1} \n{e}")
 		return validated
-
-	# def get_functions(self) -> list:
-	#     '''Return list with all functions'''
-	#     return self.functions
-
-	# def get_prompts(self) -> list:
-	#     '''Return list with all prompts'''
-	#     return self.prompts
