@@ -21,7 +21,7 @@ def main() -> None:
         # with Spinner("Parameters extraction"):
         dic["parameters"] = llm.find_parameters(item.prompt, function)
         i += 1
-    print(returned_json)
+    # print(returned_json)
 
 
 if __name__ == "__main__":
