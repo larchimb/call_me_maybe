@@ -14,7 +14,12 @@ class FunctionsPrompt(BaseModel):
 
 
 class ParamSpec(BaseModel):
-	type:Literal["number", "integer", "string", "boolean"]
+	type: Literal[
+     "number",
+     "integer",
+     "string",
+     "boolean"
+     ]
 
 
 class FunctionsDefinitions(BaseModel):

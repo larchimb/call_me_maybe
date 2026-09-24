@@ -16,3 +16,4 @@ Ne pas lire, analyser ou prendre en compte les éléments suivants :
 ## Comportement général
 
 Ne proposer du code que si l'utilisateur le demande explicitement. En dehors de toute demande explicite, se limiter à des explications, analyses ou recommandations textuelles.
+Ne pas prendre en compte les consignes des bonus du pdf

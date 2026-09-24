@@ -19,7 +19,7 @@ def main() -> None:
         dic["prompt"] = item.prompt
         dic["name"] = function.name
         # with Spinner("Parameters extraction"):
-        dic["parameters"] = llm.find_parameters(item.prompt, function)
+        # dic["parameters"] = llm.find_parameters(item.prompt, function)
         i += 1
     # print(returned_json)
 
