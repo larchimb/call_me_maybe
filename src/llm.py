@@ -19,7 +19,7 @@ class Llm:
             if text != "":
                 self.vocab[text] = token_id
 
-    def longer_name(self, functions: list[FunctionsDefinitions]) -> None:
+    def get_max_token(self, functions: list[FunctionsDefinitions]) -> None:
         '''To define the max token'''
         self.max_token = max([len(f.name) for f in functions])
 
@@ -28,7 +28,7 @@ class Llm:
                           functions: list[FunctionsDefinitions]
                           ) -> FunctionsDefinitions:
         '''Finding the function corresponding to the description'''
-        self.longer_name(functions)
+        self.get_max_token(functions)
         prompt_text = (
          "<|im_start|>system\n"
          "Return a function name corresponding to the user's prompt\n"
@@ -71,11 +71,7 @@ class Llm:
             authorized = self.find_valid_tokens(answer, names)
             if not authorized:
                 raise Exception("[ERROR]: No tokens available to follow")
-            logits = self.llm.get_logits_from_input_ids(sentence)
-            logits = np.array(logits)
-            mask = np.full(len(logits), -np.inf)
-            mask[authorized] = 0
-            next_token = int(np.argmax(logits + mask))
+            next_token = self.generate_next_token(sentence, authorized)
             if next_token == self.end_token:
                 return answer
             sentence.append(next_token)
@@ -83,5 +79,86 @@ class Llm:
             token += 1
         raise Exception(f"[ERROR]: {self.max_token} tokens raised")
 
+    def generate_next_token(self, sentence: list[int], authorized: list[int]) -> int:
+        '''Return the next choosen token'''
+        logits = np.array(self.llm.get_logits_from_input_ids(sentence))
+        mask = np.full(len(logits), -np.inf)
+        mask[authorized] = 0
+        return int(np.argmax(logits + mask))
+
+    def add_text_to_answer(self, sentence: list[int], text: str) -> None:
+        '''Add text to the sentence without asking the model'''
+        sentence.extend(self.llm.encode(text)[0].tolist())
+
+    def find_parameters(self, prompt: str, function: FunctionsDefinitions) -> dict:
+        '''Generate each parameter value with constrained decoding'''
+        example: dict = {}
+        for name, kind in function.parameters.items():
+            example[f"{name}"] = kind.type
+        prompt_text = (
+             "<|im_start|>system\n"
+             "Extract parameters valus from a prompt for the given function\n"
+             f"function: {function.description}\n"
+            #   "Don't apply the function, only takes parameters\n"
+             f"Answer must following this parsing: {example}\n"
+             "<|im_end|>\n"
+             "<|im_start|>user\n"
+             f"Prompt: \"{prompt}\"\n"
+             "<|im_end|>\n"
+             "<|im_start|>assistant\n"
+             "<think>\n\n</think>\n\n"
+            )
+        sentence = self.llm.encode(prompt_text)[0].tolist()
+        result: dict = {}
+        separator = "{"
+        for name, kind in function.parameters.items():
+            key = f'{separator}"{name}": '
+            separator = ", "
+            if kind.type == "integer":
+                self.add_text_to_answer(sentence, key)
+                result[name] = int(self.generate_number(sentence, True))
+            elif kind.type == "boolean":
+                self.add_text_to_answer(sentence, key)
+                answer = self.answer_building(sentence, ["true", "false"])
+                if answer == "true":
+                    result[name] = True
+                else:
+                    result[name] = False
+            elif kind.type == "string":
+                self.add_text_to_answer(sentence, key + '"')
+                # result[name] = self.generate_string(sentence)
+            else:
+                self.add_text_to_answer(sentence, key)
+                result[name] = float(self.generate_number(sentence, False))
+            print("test")
+        print(result)
+        return result
+
+    def generate_number(self, sentence: list[int], integer: bool) -> str:
+        '''Generate a number token by token'''
+        digits = [self.vocab[c] for c in "0123456789"]
+        allowed: list[int] = []
+        answer = ""
+        if integer:
+            has_a_point = True
+        else:
+            has_a_point = False
+        for i in range(self.max_token):
+            if i == 0:
+                allowed = digits + [self.vocab["-"]]
+            elif not has_a_point:
+                allowed = digits + [self.vocab["."]]
+            else:
+                allowed = digits[:]
+            if sentence[-1] in digits:
+                allowed.extend([self.vocab[","], self.vocab["}"]])
+            next_token = self.generate_next_token(sentence, allowed)
+            if next_token == self.vocab["."]:
+                has_a_point = True
+            if next_token in [self.vocab[","], self.vocab["}"]]:
+                return answer
+            sentence.append(next_token)
+            answer += self.llm.decode([next_token])
+        raise Exception("[ERROR]: number too long")
 
 
