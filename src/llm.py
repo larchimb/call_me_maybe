@@ -1,7 +1,7 @@
 from llm_sdk import Small_LLM_Model
 from models import FunctionsDefinitions
 import numpy as np
-# import json
+import json
 
 
 class Llm:
@@ -42,7 +42,6 @@ class Llm:
         )
         sentence = self.llm.encode(prompt_text)[0].tolist()
         answer = self.answer_building(sentence, [f.name for f in functions])
-        print(answer)
         for function in functions:
             if function.name == answer:
                 return function
@@ -99,7 +98,6 @@ class Llm:
              "<|im_start|>system\n"
              "Extract parameters valus from a prompt for the given function\n"
              f"function: {function.description}\n"
-            #   "Don't apply the function, only takes parameters\n"
              f"Answer must following this parsing: {example}\n"
              "<|im_end|>\n"
              "<|im_start|>user\n"
@@ -112,26 +110,24 @@ class Llm:
         result: dict = {}
         separator = "{"
         for name, kind in function.parameters.items():
-            key = f'{separator}"{name}": '
+            key = f'{separator}"{name}":'
             separator = ", "
             if kind.type == "integer":
                 self.add_text_to_answer(sentence, key)
                 result[name] = int(self.generate_number(sentence, True))
             elif kind.type == "boolean":
-                self.add_text_to_answer(sentence, key)
+                self.add_text_to_answer(sentence, key + " ")
                 answer = self.answer_building(sentence, ["true", "false"])
                 if answer == "true":
                     result[name] = True
                 else:
                     result[name] = False
             elif kind.type == "string":
-                self.add_text_to_answer(sentence, key + '"')
-                # result[name] = self.generate_string(sentence)
+                self.add_text_to_answer(sentence, key + ' "')
+                result[name] = self.generate_str(sentence)
             else:
                 self.add_text_to_answer(sentence, key)
                 result[name] = float(self.generate_number(sentence, False))
-            print("test")
-        print(result)
         return result
 
     def generate_number(self, sentence: list[int], integer: bool) -> str:
@@ -145,7 +141,7 @@ class Llm:
             has_a_point = False
         for i in range(self.max_token):
             if i == 0:
-                allowed = digits + [self.vocab["-"]]
+                allowed = [self.vocab[" "], self.vocab[" -"]]
             elif not has_a_point:
                 allowed = digits + [self.vocab["."]]
             else:
@@ -161,4 +157,17 @@ class Llm:
             answer += self.llm.decode([next_token])
         raise Exception("[ERROR]: number too long")
 
-
+    def generate_str(self, sentence: list[int]) -> str:
+        '''Generate a sentence token by token'''
+        answer = ""
+        for i in range(self.max_token):
+            logits = self.llm.get_logits_from_input_ids(sentence)
+            next_token = int(np.argmax(logits))
+            text = self.llm.decode([next_token])
+            if '"' in text:
+                answer += text[:text.index('"')]
+                self.add_text_to_answer(sentence, '"')
+                return answer
+            sentence.append(next_token)
+            answer += self.llm.decode([next_token])
+        raise Exception("[ERROR]: The sentence is too long")

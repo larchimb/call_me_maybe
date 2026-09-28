@@ -16,7 +16,7 @@ debug:
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .mypy_cache
-	rm -rf .venv
+# 	rm -rf .venv
 
 lint:
 	flake8 $(FILES)

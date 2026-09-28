@@ -139,6 +139,7 @@ class Llm:
             else:
                 self.force(sentence, key)
                 result[name] = float(self.generate_number(sentence, False))
+        print(result)
         return result
 
     @staticmethod

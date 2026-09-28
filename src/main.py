@@ -1,8 +1,7 @@
 from parser import Parser
 from pydantic import ValidationError
 from llm import Llm
-from spinner import Spinner
-
+import json
 
 def main() -> None:
     parser = Parser()
@@ -12,16 +11,16 @@ def main() -> None:
     for item in parser.prompts:
         returned_json.append({})
         dic = returned_json[i]
-        # with Spinner(f"Searching the function {i + 1}"):
         function = llm.find_the_function(
             item.prompt, parser.functions
             )
         dic["prompt"] = item.prompt
         dic["name"] = function.name
-        # with Spinner("Parameters extraction"):
         dic["parameters"] = llm.find_parameters(item.prompt, function)
         i += 1
-    # print(returned_json)
+    print(json.dumps(returned_json))
+    # for element in returned_json:
+    #     print(json.dumps(element))
 
 
 if __name__ == "__main__":
