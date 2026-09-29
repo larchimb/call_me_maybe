@@ -1,20 +1,32 @@
-from pydantic import BaseModel, ConfigDict, StringConstraints
-from typing import Literal, Annotated
-
-NonEmpty = Annotated[
-	str,
-	StringConstraints(strip_whitespace=True, min_length=1)
-	]
+from pydantic import BaseModel, ConfigDict
+from typing import Literal
 
 
 class FunctionsPrompt(BaseModel):
-	model_config = ConfigDict(extra="forbid")
-	prompt: NonEmpty
-	function_used: str = ""
+    """A prompt to translate into a function call.
+
+    Attributes:
+        prompt: The natural language request.
+        function_used: Name of the function chosen for the prompt.
+    """
+
+    model_config = ConfigDict(
+     extra="forbid",
+     str_strip_whitespace=True,
+     str_min_length=1
+     )
+    prompt: str
+    function_used: str = ""
 
 
 class ParamSpec(BaseModel):
-	type: Literal[
+    """The type of a parameter or of a return value.
+
+    Attributes:
+        type: One of "number", "integer", "string" or "boolean".
+    """
+
+    type: Literal[
      "number",
      "integer",
      "string",
@@ -23,7 +35,20 @@ class ParamSpec(BaseModel):
 
 
 class FunctionsDefinitions(BaseModel):
-	name: NonEmpty
-	description: NonEmpty
-	parameters: dict[NonEmpty, ParamSpec]
-	returns: ParamSpec
+    """A function the model can call.
+
+    Attributes:
+        name: The function name.
+        description: What the function does.
+        parameters: The parameter names mapped to their types.
+        returns: The type of the returned value.
+    """
+    model_config = ConfigDict(
+         extra="forbid",
+         str_strip_whitespace=True,
+         str_min_length=1
+         )
+    name: str
+    description: str
+    parameters: dict[str, ParamSpec]
+    returns: ParamSpec
