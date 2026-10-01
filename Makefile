@@ -6,20 +6,20 @@ install:
 	uv sync
 
 run:
-	uv run python -m src
+	uv run python -m src $(ARG)
 
 debug:
-	uv run python -m pdb -m src
+	uv run python -m pdb -m src $(ARG)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .mypy_cache
-# 	rm -rf .venv
+	rm -rf .venv
 
 lint:
-	flake8 .
-	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	uv run flake8 .
+	uv run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	flake8 .
-	mypy . --strict
+	uv run flake8 .
+	uv run mypy . --strict

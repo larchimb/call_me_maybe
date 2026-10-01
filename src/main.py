@@ -4,6 +4,7 @@ import os
 from .parser import Parser
 from .llm import Llm
 import json
+from typing import Any
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -27,17 +28,18 @@ def parse_arguments() -> argparse.Namespace:
     )
     arg_parser.add_argument(
         "--output",
-        default="data/output/function_calling_results.json",
+        default="data/output/function_calls.json",
         help="JSON file where the results are written",
     )
     return arg_parser.parse_args()
+
 
 def main() -> None:
     """Translate every prompt of the input file into a function call."""
     args = parse_arguments()
     parser = Parser(args.input, args.functions_definition)
     llm = Llm(parser.prompts, parser.functions)
-    returned_json: list[dict] = []
+    returned_json: list[dict[str, Any]] = []
     i = 0
     for item in parser.prompts:
         returned_json.append({})
@@ -57,4 +59,3 @@ def main() -> None:
             json.dump(returned_json, f, indent=4)
     except OSError as e:
         raise Exception(f"[ERROR]: cannot write {args.output}: {e}")
-

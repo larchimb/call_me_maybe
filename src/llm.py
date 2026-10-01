@@ -1,6 +1,7 @@
 from llm_sdk import Small_LLM_Model
 from .models import FunctionsDefinitions, FunctionsPrompt
 import numpy as np
+from typing import Any
 
 
 class Llm:
@@ -48,7 +49,7 @@ class Llm:
             prompts: The available prompts.
             functions: The available functions.
         """
-        p_length = max([len(p.prompt) for p in prompts],default=0)
+        p_length = max([len(p.prompt) for p in prompts], default=0)
         f_length = max(len(f.name) for f in functions)
         if p_length > f_length:
             self.max_token = p_length * 2
@@ -143,7 +144,9 @@ class Llm:
             token += 1
         raise Exception(f"[ERROR]: limit of {self.max_token} tokens raised")
 
-    def generate_next_token(self, sentence: list[int], authorized: list[int]) -> int:
+    def generate_next_token(self,
+                            sentence: list[int],
+                            authorized: list[int]) -> int:
         """Choose the most likely token among the authorized ones.
 
         Args:
@@ -169,7 +172,9 @@ class Llm:
         """
         sentence.extend(self.llm.encode(text)[0].tolist())
 
-    def find_parameters(self, prompt: str, function: FunctionsDefinitions) -> dict:
+    def find_parameters(self,
+                        prompt: str,
+                        function: FunctionsDefinitions) -> dict[str, Any]:
         """Generate the value of each parameter of a function.
 
         The JSON structure is written by the program and the model only
@@ -183,7 +188,7 @@ class Llm:
             The parameter names mapped to their values, converted to the
             Python type matching their schema type.
         """
-        example: dict = {}
+        example: dict[str, str] = {}
         for name, kind in function.parameters.items():
             example[name] = kind.type
         prompt_text = (
@@ -191,6 +196,9 @@ class Llm:
              "Extract parameters valus from a prompt for the given function\n"
              f"function: {function.description}\n"
              f"Answer must following this parsing: {example}\n"
+             "Example: \"Replace all spaces in 'a b c' with underscores\" "
+             "-> {\"text\": \"a b c\", \"regex\": \"\\\\s\", "
+             "\"replacement\": \"_\"}\n"
              "<|im_end|>\n"
              "<|im_start|>user\n"
              f"Prompt: \"{prompt}\"\n"
@@ -199,7 +207,7 @@ class Llm:
              "<think>\n\n</think>\n\n"
             )
         sentence = self.llm.encode(prompt_text)[0].tolist()
-        result: dict = {}
+        result: dict[str, Any] = {}
         separator = "{"
         for name, kind in function.parameters.items():
             key = f'{separator}"{name}":'
@@ -254,7 +262,7 @@ class Llm:
                 allowed.extend([self.vocab[","], self.vocab["}"]])
             next_token = self.generate_next_token(sentence, allowed)
             if next_token == self.vocab["."]:
-                has_a_point = True
+                is_integer = True
             if next_token in [self.vocab[","], self.vocab["}"]]:
                 return answer
             sentence.append(next_token)

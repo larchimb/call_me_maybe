@@ -2,6 +2,7 @@ import json
 from json import JSONDecodeError
 from pydantic import BaseModel, ValidationError
 from .models import FunctionsPrompt, FunctionsDefinitions
+from typing import Any
 
 
 class Parser():
@@ -32,7 +33,7 @@ class Parser():
             raise Exception("[ERROR]: Your file doesn't contain any function.")
 
     @staticmethod
-    def load_validated(path: str, model: type[BaseModel]) -> list:
+    def load_validated(path: str, model: type[BaseModel]) -> list[Any]:
         """Read a JSON list and validate each element with a model.
 
         Args:
@@ -51,7 +52,7 @@ class Parser():
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if not isinstance(data, list):
-                    raise Exception(f"[ERROR]: Json file isn't a list")
+                    raise Exception("[ERROR]: Json file isn't a list")
         except FileNotFoundError as e:
             raise (e)
         except JSONDecodeError:

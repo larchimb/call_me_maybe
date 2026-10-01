@@ -5,7 +5,6 @@ description = "LLM SDK for local model inference"
 requires-python = ">=3.10"
 dependencies = [
     "accelerate",
-    "transformers",
     "pydantic",
     "numpy",
     "llm-sdk",
@@ -23,3 +22,13 @@ members = ["llm_sdk"]
 
 [tool.uv.sources]
 llm-sdk = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "flake8>=7.4.1",
+    "mypy>=2.3.1",
+]
+
+[[tool.mypy.overrides]]
+module = ["llm_sdk", "llm_sdk.*"]
+ignore_errors = true
